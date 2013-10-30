@@ -49,10 +49,13 @@ def parsePage(pagestring):
 
 host="http://97.99bitgongchang.org/00/10.html"
 #http://97.99bitgongchang.info"
+#{title:,img:[],torrent:[]}
+#
 rst=urllib2.urlopen(host).read()
 eP=eHPer()
 eP.feed(rst)
 r=eP.links()
+avs=[]
 for x in r[:30]:
     print x['link']+";"+x['name']           
     eurl=urlparse.urljoin(host, x['link'])
@@ -60,7 +63,34 @@ for x in r[:30]:
     root=Bs(s)
     ai=root.find_all("div",{'id':'content'})
     for x in ai:
-        sss=re.sub(r'<br.*?>','',str(x))
+        g=re.search(r'<div.*?>(?P<content>.*)</div',str(x),flags=re.S)
+        sss=g.group("content")
+        #sss=sss.replace("\n","")
+        sss=re.sub(r'<br.*?>','',sss)
         sss=re.sub(r'<font.*?>','',sss)
-        print sss
+        lss=re.split(r'(<a.*>.*?</a>)',sss,flags=re.S)
+        for ct in lss:
+            if not ct:
+                continue
+            lxx=re.split(r'(<img.*?>)',ct,flags=re.S)
+            
+            for xx in lxx:
+                if xx=="" or xx=="\n":
+                    continue
+                img=re.search(r'<img.*src="(?P<url>.*?jpg)"',xx)
+                tor=re.search(r'<a.*href="(?P<url>.*?html)"',xx)
+                
+                if img:
+                    avs[-1].setdefault("img",[])
+                    avs[-1]['img'].append(img.group("url"))
+                elif tor:
+                    avs[-1].setdefault("torrent",[])
+                    avs[-1]['torrent'].append(tor.group("url"))
+                    print tor.group("url")
+                else:
+                    avs.append({"title":xx[:20]})
+
+        print len(avs)
+    break
+                
 ##    
