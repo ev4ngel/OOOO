@@ -93,4 +93,3 @@ for x in r[:30]:
         print len(avs)
     break
                 
-##    
