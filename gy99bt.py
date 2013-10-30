@@ -56,6 +56,7 @@ eP=eHPer()
 eP.feed(rst)
 r=eP.links()
 avs=[]
+log=open('log.txt','w')
 for x in r[:30]:
     print x['link']+";"+x['name']           
     eurl=urlparse.urljoin(host, x['link'])
@@ -65,17 +66,16 @@ for x in r[:30]:
     for x in ai:
         g=re.search(r'<div.*?>(?P<content>.*)</div',str(x),flags=re.S)
         sss=g.group("content")
-        #sss=sss.replace("\n","")
         sss=re.sub(r'<br.*?>','',sss)
         sss=re.sub(r'<font.*?>','',sss)
-        lss=re.split(r'(<a.*>.*?</a>)',sss,flags=re.S)
+        lss=re.split(r'(<a.*?>.*?</a>)',sss,flags=re.S)
         for ct in lss:
             if not ct:
                 continue
             lxx=re.split(r'(<img.*?>)',ct,flags=re.S)
             
             for xx in lxx:
-                if xx=="" or xx=="\n":
+                if len(xx)<20:
                     continue
                 img=re.search(r'<img.*src="(?P<url>.*?jpg)"',xx)
                 tor=re.search(r'<a.*href="(?P<url>.*?html)"',xx)
@@ -86,10 +86,11 @@ for x in r[:30]:
                 elif tor:
                     avs[-1].setdefault("torrent",[])
                     avs[-1]['torrent'].append(tor.group("url"))
-                    print tor.group("url")
+                    
                 else:
-                    avs.append({"title":xx[:20]})
-
-        print len(avs)
-    break
+                    c=re.search(r'[^\s]+',xx,flags=re.S).group(0)
+                    avs.append({"title":c})
+                    print c
+        log.write(str(avs))
                 
+log.close()
