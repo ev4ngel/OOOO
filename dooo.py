@@ -13,7 +13,6 @@ def log(x):
         _log.write('*'*50+"\n")
     _log.close()
 host="http://97.99bitgongchang.org/00/10.html"
-avs=[]
 
 def gethostcontent(eurl):
     s=urllib2.urlopen(eurl).read()
@@ -37,7 +36,41 @@ def dealone(ct):
     one['title']=re.search(r'\S+',re.sub(r'(<a.*?</a>)',"",ct,flags=re.S)).group(0)
     return one
 def dealfull(ct):
-    return []
+    alls=[]  
+    lss=re.split(r'(<br.*?>)|(</?font.*?>)|(</?strong>)|([\n\r])',ct,re.S)
+    #lss=re.split(r'[\n\r]',sss,re.S)
+    print len(lss)
+    lasttor=4
+    tmpstr=[]
+    meettor=False
+    for ln in lss:
+        if not ln:
+            continue
+        #print ln
+        img=re.search(r'<img.*src="(?P<url>.*?jpg)"',ln)
+        tor=re.search(r'<a.*href="(?P<url>.*?html)"',ln)
+        if img:
+            alls[-1].setdefault("img",[])
+            alls[-1]['img'].append(img.group('url'))
+        elif tor:
+            alls[-1].setdefault("torrent",[])
+            alls[-1]['torrent'].append(tor.group("url"))
+            lasttor=4
+            meettor=True
+        elif re.search(r'</a>',ln):
+            continue
+        else:
+            if meettor:
+                if lasttor==0:
+                    alls.append({'title':tmpstr[0]})
+                    del tmpstr[:]
+                    meettor=False
+                else:
+                    lasttor-=1
+                    tmpstr.append(ln)
+            else:
+                alls.append({'title':ln})
+    return alls
 def fromhostpath(host,x):
     return urlparse.urljoin(host, x['link'])
 def rbym(url):
@@ -60,30 +93,34 @@ def yzwm(url):
 def mnqb(url):
 #美女骑兵，日本同步Nike，
     #eurl=urlparse.urljoin(host, x['link'])
-    alls=[]  
-    sss=re.sub(r'(<br.*?>)|(</?font.*?>)|(</?strong>)|(={5,})|(-{5,})','',gethostcontent(url))
-    lss=re.split(r'(<a.*?>.*?</a>)',sss,flags=re.S)
-    for ct in lss:
-        if not ct:
-            continue
-        lxx=re.split(r'(<img.*?>)',ct,flags=re.S)    
-        for xx in lxx:
-            if len(xx)<20:
-                continue
-            img=re.search(r'<img.*src="(?P<url>.*?jpg)"',xx)
-            tor=re.search(r'<a.*href="(?P<url>.*?html)"',xx)
-            aaa=re.search(r'(</?a.*?>)|(img.*?/?>)',xx)
-            if img:
-                alls[-1].setdefault("img",[])
-                alls[-1]['img'].append(img.group("url"))
-            elif tor:
-                alls[-1].setdefault("torrent",[])
-                alls[-1]['torrent'].append(tor.group("url"))
-            elif aaa:
-                continue
-            else:
-                c=re.search(r'[^\s]+',xx,flags=re.S).group(0)
-                alls.append({"title":c})
+    return dealfull(gethostcontent(url))
+
+
+##    alls=[]  
+##    sss=re.sub(r'(<br.*?>)|(</?font.*?>)|(</?strong>)','',gethostcontent(url))
+##    lss=re.split(r'(<a.*?>.*?</a>)',sss,flags=re.S)
+##    for ct in lss:
+##        if not ct:
+##            continue
+##        lxx=re.split(r'(<img.*?>)',ct,flags=re.S)    
+##        for xx in lxx:
+##            if len(xx)<20:
+##                continue
+##            img=re.search(r'<img.*src="(?P<url>.*?jpg)"',xx)
+##            tor=re.search(r'<a.*href="(?P<url>.*?html)"',xx)
+##            aaa=re.search(r'(</?a.*?>)|(img.*?/?>)',xx)
+##            if img:
+##                alls[-1].setdefault("img",[])
+##                alls[-1]['img'].append(img.group("url"))
+##            elif tor:
+##                alls[-1].setdefault("torrent",[])
+##                alls[-1]['torrent'].append(tor.group("url"))
+##            elif aaa:
+##                continue
+##            else:
+##                c=re.search(r'[^\s]+',xx,flags=re.S).group(0)
+##                alls.append({"title":c})
+##    return alls
 def wtlml(url):
     #灣搭拉咩
     alls=[]    
@@ -94,4 +131,4 @@ def wtlml(url):
     return alls
 
 #MNQB({'link':'/p2p/10/13-09-30-23-06-49.html'})
-log(yzwm('http://ko.99bitgc.info/p2p/10/13-10-13-20-02-09.html'))
+log(mnqb('http://ko.99bitgc.info/p2p/10/13-10-26-22-58-54.html'))
