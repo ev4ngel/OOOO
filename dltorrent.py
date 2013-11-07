@@ -12,6 +12,8 @@ def torrent_download(host):
     getPostPath=re.compile(r'<form.*action="(?P<action>.*?)"')
     getElse=re.compile(r'value="(?P<value>.*?)"\s*id="(?P<id>.*?)"\s*name="(?P<name>.*?)"')
     action=getPostPath.search(ss)
+    if not action:
+        return None
     actpath=urlparse.urlparse(urlparse.urljoin(host, action.group("action"))).path
     for s in re.findall(r'<input\stype="hidden".*?>', ss, re.S):
         g=getElse.search(s)
@@ -27,8 +29,20 @@ def torrent_download(host):
     rsp=hhc.getresponse()
     txt=rsp.read()
     title=rsp.getheader("content-disposition").split('"')[1]
-    return title, txt
-
-n, a=torrent_download('http://www3.kidown.com/bt5/file.php/MV4B1RJ.html')
-open(n, 'wb').write(a)
-print "ok"
+    return (title, txt)
+def write_torrent(url,filepath):
+    try:
+        n, a=torrent_download(url)
+        with open(filepath+"/"+n, 'wb') as f:
+            f.write(a)
+    except:
+        print "Failed to get torrent"
+    
+if __name__=="__main__":
+    try:
+        n, a=torrent_download('http://www3.kidown.com/bt5/file.php/MV4B1RJ.html')
+        with open(n, 'wb') as f:
+            f.write(a)
+    except:
+        pass
+    

@@ -1,6 +1,11 @@
 #-*- encoding:utf8 -*-
 import urllib2, urllib, re, os, sys, HTMLParser, urlparse
-from bs4 import BeautifulSoup as Bs
+from dltorrent import *
+try:
+    from bs4 import BeautifulSoup as Bs
+except:
+    print "BeautifulSoup Needed!"
+    pass
 titles={"日本有码":None,"日本同步":None,"美女骑兵":None,}
 #"灣搭拉咩"使用——————
 #"欧美无码"=======中间，如果多个===则后半部分为其他
@@ -131,4 +136,17 @@ def wtlml(url):
     return alls
 
 #MNQB({'link':'/p2p/10/13-09-30-23-06-49.html'})
-log(mnqb('http://ko.99bitgc.info/p2p/10/13-10-26-22-58-54.html'))
+#log(mnqb('http://ko.99bitgc.info/p2p/10/13-10-26-22-58-54.html'))
+def download(alls):
+    for rt in alls:
+        print rt
+        _d=rt['title'].strip()
+        os.mkdir(_d)
+        os.chdir(_d)
+        #os.mkdir("pic")
+        for img in rt['img']:
+            urllib.urlretrieve(img,img.split("/")[-1])
+        write_torrent(rt['torrent'][0],rt['title']+".torrent")
+        os.chdir(os.pardir)
+#download(wtlml("http://ko.99bitgc.org/p2p/10/13-09-30-23-06-49.html"))
+download(rbym("http://99.99btgongchang.info/p2p/10/13-09-30-15-46-59.html"))
