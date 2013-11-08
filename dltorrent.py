@@ -1,8 +1,12 @@
 import urllib2,urllib,httplib, re, urlparse
-def torrent_download(host):
-    ph=urlparse.urlparse(host)
+def get_torrent_string(url):
+    """
+    input:  url the html url
+    return: title the file name
+            string the content in torrent
+    """
+    ph=urlparse.urlparse(url)
     port=80 if ph.port==None else ph.port
-    print port
     hhc=httplib.HTTPConnection(ph.netloc, 80)
     hhc.request("GET", ph.path,None, {})
     rst=hhc.getresponse()
@@ -27,16 +31,22 @@ def torrent_download(host):
     hhc=httplib.HTTPConnection(ph.netloc, 80)
     hhc.request("POST", actpath, cparam, header)
     rsp=hhc.getresponse()
-    txt=rsp.read()
+    content=rsp.read()
     title=rsp.getheader("content-disposition").split('"')[1]
-    return (title, txt)
-def write_torrent(url,filepath):
+    return (title, content)
+def torrent_download(url,filepath,name=None):
+    rlt=True
     try:
-        n, a=torrent_download(url)
+        n, a=get_torrent_string(url)
+        if not name:
+            n=name
         with open(filepath+"/"+n, 'wb') as f:
             f.write(a)
     except:
-        print "Failed to get torrent"
+        rlt=False
+        print "Failed To Get Torrent"
+    finally:
+        return url,rlt
     
 if __name__=="__main__":
     try:
