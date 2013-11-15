@@ -60,4 +60,7 @@ class axDB:
         self._cr.executemany("INSERT INTO DISABLEIMG (URL,PTID) VALUES (?,?)",[(a,r[0]) for a in ax['img']])
         self._cr.commit()
     def close(self):
-        self._cn.close()
+        try:
+            self._cn.close()
+        except:
+            pass
