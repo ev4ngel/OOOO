@@ -1,4 +1,4 @@
-import urllib,httplib, re, urlparse
+import urllib2,urllib,httplib, re, urlparse,os
 def get_torrent_string(url):
     """
     input:  url the html url
@@ -34,23 +34,44 @@ def get_torrent_string(url):
     content=rsp.read()
     title=rsp.getheader("content-disposition").split('"')[1]
     return (title, content)
-def torrent_download(url,filepath,name=None):
+def torrent_download(url,filepath,name=None,debug=False):
     rlt=True
     try:
         n, a=get_torrent_string(url)
         if name:
             n=name
-        with open(os.path.join(filepath,n), 'wb') as f:
+        absname=os.path.join(filepath,n)
+        if os.path.exists(absname):
+            return url,rlt
+        if not os.path.exists(filepath):
+            os.makedirs(filepath)
+        with open(absname, 'wb') as f:            
             f.write(a)
     except:
         rlt=False
-        print "Failed To Get Torrent"
+        if debug:
+            print "Failed To Get Torrent"+url
     finally:
         return url,rlt
-    
-if __name__=="__main__":
+def img_download(url,to_path,affix=""):
+    fname=os.path.join(to_path,affix+url.split("/")[-1])
+    state=False
+    if  os.path.exists(fname):
+       return  (fname,url,True)
+    if not os.path.exists(to_path):
+        os.makedirs(to_path)
     try:
-        n, a=torrent_download('http://www3.kidown.com/bt5/file.php/MV4B1RJ.html',"d:\\")
-    except:
-        pass
+        text=urllib2.urlopen(urllib2.Request(url,headers={"user-agent":"Mozilla/5.0 (Windows NT 5.1; rv:25.0) Gecko/20100101 Firefox/25.0"})
+    ).read()
+        with open(fname,'wb') as f:
+            f.write(text)
+        state=True    
+    finally:
+        return (fname,url,state)
+if __name__=="__main__":
+##    try:
+##        n, a=torrent_download('http://www3.kidown.com/bt5/file.php/MV4B1RJ.html',"d:\\sdxffd")
+##    except:
+##        pass
+    print img_download("http://img789.com/images/2013/09/13/092G6bQ.jpg","d:\\oxx","a_")
     
