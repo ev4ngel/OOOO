@@ -2,6 +2,9 @@
 import sqlite3
 import os
 class axDB:
+    #imgs:url,name,path,state,torrent_id
+    #torrents:url,name,path,state,page_id
+    #pages:url,title,state(1 over,0 not over)
     def __init__(self,path=os.getcwd()):
         self._path=path
         self._dbname="ax.db"

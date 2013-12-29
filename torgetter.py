@@ -5,13 +5,15 @@ def get_torrent_string(url):
     return: title the file name
             string the content in torrent
     """
-    ph=urlparse.urlparse(url)
-    port=80 if ph.port==None else ph.port
-    hhc=httplib.HTTPConnection(ph.netloc, port)
-    hhc.request("GET", ph.path,None, {})
-    rst=hhc.getresponse()
-    ss=rst.read()
-    hhc.close()    
+##    ph=urlparse.urlparse(url)
+##    port=80 if ph.port==None else ph.port
+##    hhc=httplib.HTTPConnection(ph.netloc, port)
+##    hhc.request("GET", ph.path,None, {})
+##    rst=hhc.getresponse()
+##    ss=rst.read()
+##      hhc.close()  
+    request=urllib2.Request(url,headers={"user-agent":"Mozilla/5.0 (Windows NT 5.1; rv:25.0) Gecko/20100101 Firefox/25.0"})
+    ss=urllib2.urlopen(request).read()  
     param={}
     getPostPath=re.compile(r'<form.*action="(?P<action>.*?)"')
     getElse=re.compile(r'value="(?P<value>.*?)"\s*id="(?P<id>.*?)"\s*name="(?P<name>.*?)"')
