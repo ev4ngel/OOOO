@@ -64,20 +64,24 @@ def download_ax(ax,tgt_path,seperate_dir=False,
             seperate_dir true if you want to mkdir for every item(one torrent and more pic)
     return:None for final use
     """
+    db=axdb(tgt_path)
     for axx in ax:        
         dk=axx["tor"].split("/")[-1]
-        print axx["tor"]
-        #print dk+"_ing........."
+        pid=db.getPageIdByUrl(axx['purl'])
+        if pid==-1:
+            pid=db.addPage(axx['purl'],"",1)
         todir=tgt_path
         if seperate_dir:
             todir=os.path.join(tgt_path,dk)
             os.mkdir(todir)
         url,rlt=torrent_download(axx['tor'],todir)
+        tid=db.addTorrent(url,url.split("/")[-1],todir,int(rlt),pid)
         onitem({'path':dk,"url":axx['tor'],"purl":axx['purl'],"img":axx['img']})
         if not rlt: 
             ondisabletor({"url":url,"purl":axx['purl']})
         for img in axx['img']:
             imgrlt=img_download(img,todir,dk+"_")
+            db.addImg(imgrlt[1],imgrlt[0],todir,int(imgrlt[2]),tid)
             if not imgrlt[2]:
                 ondisableimg([])
             else:
