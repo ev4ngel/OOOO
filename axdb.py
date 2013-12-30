@@ -5,31 +5,33 @@ class axDB:
     #imgs:url,name,path,state,torrent_id
     #torrents:url,name,path,state,page_id
     #pages:url,title,state(1 over,0 not over)
-    def __init__(self,path=os.getcwd()):
+    def __init__(self,path=os.getcwd(),removeifexists=False):
         self._path=path
-        self._dbname="ax.db"
+        self._dbname="abx.db"
+        self._new=False
         self.init_all()
     def init_all(self):
         abspath=os.path.join(self._path,self._dbname)
-        if not os.path.exists(abspath):
-            self._cn=sqlite3.connect(abspath)
-            self._cr=self._cn.cursor()
-            self._cr.execute("CREATE TABLE DISABLEIMG (URL TEXT,PTID INT)")
-            self._cr.execute("CREATE TABLE MONTHPAGE (MPURL TEXT,MPTITLE TEXT,MPDOWNSTATE INT DEFAULT 0)")
-            self._cr.execute("CREATE TABLE IMGS (IURL TEXT,INAME TEXT,TID INT,IPATH TEXT,IDOWNSTATE INT DEFAULT 0)")
-            self._cr.execute("CREATE TABLE TORS (TNAME TEXT,MPID INT,TPURL TEXT,TPATH TEXT DEFAULT NULL,TDOWNSTATE INT  DEFAULT 0)")
-            self._cr.execute("CREATE TABLE DISABLETOR (URL TEXT,PURL TEXT)")
+        self._cn=sqlite3.connect(abspath)
+        self._cr=self._cn.cursor()
+        try:
+            self._cr.execute("CREATE TABLE imgs (url TEXT,name TEXT,path TEXT,state INT,torrent_id INT)")
+            self._cr.execute("CREATE TABLE torrents (url TEXT,name TEXT,path TEXT,state INT,page_id INT)")
+            self._cr.execute("CREATE TABLE pages (url TEXT,title TEXT,state INT)")
             self._cn.commit()
+        except:
+            self._new=True
+    def addImg(self,url,name,path,state,torrent_id):
+        self._cr.execute("INSERT INTO imgs  VALUES(?,?,?,?,?)",(url,name,path,state,torrent_id))
+        if commit:
+            self._cn.commit()
+            return self._cr.lastrowid
         else:
-            self._cn=sqlite3.connect(abspath)
-            self._cr=self._cn.cursor()
-    def addMonthPage(self,title,url):
-        self._cr.execute("INSERT INTO MONTHPAGE (MPTITLE,MPURL) VALUES(?,?)",(title,url))
+            return -1
+    def addImgs(self,img_s):
+        self._cr.executemany("INSERT INTO imgs  VALUES(?,?,?,?,?)",img_s)
         self._cn.commit()
-        return self._cr.lastrowid
-    def addMonthPages(self,axmps):
-        self._cr.excutemany("INSERT INTO MONTHPAGE (MPTITLE,MPURL) VALUES (?,?)",[(a['title'],a['url']) for a in axmps])
-        self._cn.commit()
+        return len(img_s)
     def addItem(self,axItem,path,mpid,waitforcommit=False):
         """
         axItem:["tor",img:[]]
@@ -43,18 +45,42 @@ class axDB:
         self._cr.executemany("INSERT INTO IMGS (IURL,INAME,TID) VALUES (?,?,?)",[(a,a.split('/')[-1],lastrow) for a in axItem["img"]])
         if not waitforcommit:
             self._cn.commit()
+    def addPage(self,url,title,state,commit=True):
+        self._cr.execute("INSERT INTO pages  VALUES(?,?,?)",(url,title,state))
+        if commit:
+            self._cn.commit()
+            return self._cr.lastrowid
+        else:
+            return -1
+    def addPages(self,page_s):
+        self._cr.excutemany("INSERT INTO pages VALUES (?,?)",page_s)
+        self._cn.commit()
+        return len(page_s)
     def getPageIdByUrl(self,url):
-        self._cr.execute("SELECT OID FROM MONTHPAGE WHERE MPURL='?'",(url,))
-        r=self._cr.fetchone()
-        rlt=-1 if not r else r[0]
-        return rlt
-    def addTorrent(self,tor_url,tor_dir,tor_page_id):
-        self._cr.execute("INSERT INTO TORS(TNAME,TPURL,TPATH,MPID) VALUES (?,?,?,?)",(tor_url.split("/")[-1],tor_url,tor_dir,tor_page_id))
-        self._cn.commit()
-        return self._cr.lastrowid
-    def addDisableTor(self,ax):
-        self._cr.execute("INSERT INTO DISABLETOR (URL,PURL) VALUES (?,?)",(ax['url'],ax['purl']))
-        self._cn.commit()
+        self._cr.execute("SELECT OID FROM pages WHERE url='%s'"%url)
+        try:
+            return self._cr.fetchone()[0]
+        except:
+            return -1
+    def addTorrent(self,tor_url,tor_name,tor_dir,tor_state,page_id,commit=True):
+        self._cr.execute("INSERT INTO torrents VALUES (?,?,?,?,?)",(tor_url,tor_name,tor_dir,tor_state,page_id))
+        if commit:
+            self._cn.commit()
+            return self._cr.lastrowid
+        else:
+            return -1
+    def addTorrents(self,tor_s):
+        self._cr.executemany("INSERT INTO torrents VALUES (?,?,?,?,?)",tor_s)
+##        for tor in tor_s:#Which method is the best?
+##            self.addTorrent(*tor,commit=False)
+        self._cr.commit()
+        return len(tor_s)
+    def getTorrentIdByName(self,tor_name):
+        self._cr.execute("SELECT OID FROM TORRENTS where name='%s'"%tor_name)
+        try:
+            return self._cr.fetchone()[0]
+        except:
+            return -1
     def addPageItems(self,axItems,path):
         """http://99.99btgongchang.info/00/11.html
         [{'tor':"xxx",'img':[],'purl':xxx},]
@@ -63,17 +89,8 @@ class axDB:
         for ai in axItems:
             self.addItem(ai,path,True)
         self._cn.commit()
-        
-    def addDisableImg(self,ax):
-        """
-        ax {"tor":"","img":[]}
-        """
-        self._cr.execute("SELECT OID FROM TORS WHERE TURL='?'",(ax['tor'],))
-        r=self._cr.fetchone()
-        self._cr.executemany("INSERT INTO DISABLEIMG (URL,PTID) VALUES (?,?)",[(a,r[0]) for a in ax['img']])
-        self._cr.commit()
     def close(self):
         try:
             self._cn.close()
         except:
-            pass
+            pass#closed already
