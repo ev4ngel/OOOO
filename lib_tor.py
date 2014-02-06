@@ -5,13 +5,6 @@ def get_torrent_string(url):
     return: title the file name
             string the content in torrent
     """
-##    ph=urlparse.urlparse(url)
-##    port=80 if ph.port==None else ph.port
-##    hhc=httplib.HTTPConnection(ph.netloc, port)
-##    hhc.request("GET", ph.path,None, {})
-##    rst=hhc.getresponse()
-##    ss=rst.read()
-##      hhc.close()  
     request=urllib2.Request(url,headers={"user-agent":"Mozilla/5.0 (Windows NT 5.1; rv:25.0) Gecko/20100101 Firefox/25.0"})
     ss=urllib2.urlopen(request,timeout=5).read()  
     param={}
@@ -59,20 +52,18 @@ def img_download(url,to_path,affix=""):
     fname=os.path.join(to_path,affix+url.split("/")[-1])
     state=False
     if  os.path.exists(fname):
-       return  (fname,url,True)
-    if not os.path.exists(to_path):
-        os.makedirs(to_path)
-    try:
-        text=urllib2.urlopen(urllib2.Request(url,headers={"user-agent":"Mozilla/5.0 (Windows NT 5.1; rv:25.0) Gecko/20100101 Firefox/25.0"}),timeout=10).read()
-        with open(fname,'wb') as f:
-            f.write(text)
-        state=True    
-    finally:
-        return (fname,url,state)
+       state=True
+    else:
+        if not os.path.exists(to_path):
+            os.makedirs(to_path)
+        try:
+            text=urllib2.urlopen(urllib2.Request(url,headers={"user-agent":"Mozilla/5.0 (Windows NT 5.1; rv:25.0) Gecko/20100101 Firefox/25.0"}),timeout=10).read()
+            with open(fname,'wb') as f:
+                f.write(text)
+            state=True
+        except:
+            pass
+    return (fname,url,state)
 if __name__=="__main__":
-##    try:
-##        n, a=torrent_download('http://www3.kidown.com/bt5/file.php/MV4B1RJ.html',"d:\\sdxffd")
-##    except:
-##        pass
     print img_download("http://img789.com/images/2013/09/13/092G6bQ.jpg","d:\\oxx","a_")
     
