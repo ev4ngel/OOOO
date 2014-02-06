@@ -2,3 +2,4 @@ details/
 abc/
 *.pyc
 .db
+test_*.py
