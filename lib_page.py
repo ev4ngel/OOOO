@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup as bs,SoupStrainer as ss
 import urllib2,urllib,re,os,urlparse
-from torgetter import *
-from axdb import *
+from lib_page import *
+from lib_db import *
 
 #[{"img":[],"tor":xxxxx},]
 #
