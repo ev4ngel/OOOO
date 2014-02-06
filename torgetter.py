@@ -13,7 +13,7 @@ def get_torrent_string(url):
 ##    ss=rst.read()
 ##      hhc.close()  
     request=urllib2.Request(url,headers={"user-agent":"Mozilla/5.0 (Windows NT 5.1; rv:25.0) Gecko/20100101 Firefox/25.0"})
-    ss=urllib2.urlopen(request).read()  
+    ss=urllib2.urlopen(request,timeout=5).read()  
     param={}
     getPostPath=re.compile(r'<form.*action="(?P<action>.*?)"')
     getElse=re.compile(r'value="(?P<value>.*?)"\s*id="(?P<id>.*?)"\s*name="(?P<name>.*?)"')
@@ -28,9 +28,9 @@ def get_torrent_string(url):
     header={}
     header['user-agent']="Mozilla/4.0"
     header['content-type']="application/x-www-form-urlencoded"
-    header['host']=ph.netloc
+    header['host']=urlparse.urlparse(url).netloc
     header['connection']='keep-alive'
-    hhc=httplib.HTTPConnection(ph.netloc, 80)
+    hhc=httplib.HTTPConnection(header['host'], 80)
     hhc.request("POST", actpath, cparam, header)
     rsp=hhc.getresponse()
     content=rsp.read()
@@ -63,8 +63,7 @@ def img_download(url,to_path,affix=""):
     if not os.path.exists(to_path):
         os.makedirs(to_path)
     try:
-        text=urllib2.urlopen(urllib2.Request(url,headers={"user-agent":"Mozilla/5.0 (Windows NT 5.1; rv:25.0) Gecko/20100101 Firefox/25.0"})
-    ).read()
+        text=urllib2.urlopen(urllib2.Request(url,headers={"user-agent":"Mozilla/5.0 (Windows NT 5.1; rv:25.0) Gecko/20100101 Firefox/25.0"}),timeout=10).read()
         with open(fname,'wb') as f:
             f.write(text)
         state=True    

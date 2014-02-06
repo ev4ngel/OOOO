@@ -1,6 +1,7 @@
 #-*- coding:utf-8 -*-
 from gy99 import *
 import json,sys,os
+import axdb
 def print_month_page(ax):
     for axx in ax:
         print axx.get("tor")
@@ -25,11 +26,23 @@ if __name__=="__main__":
     #a=json.dumps(mains)
     #open("d:\\axm.txt",'w').write(a)    
     #.format(str(x+100)[-2:]))
-    month12=fromMonthPage("http://ko.99btgongchang.com/00/312.html")
+    month12=fromMonthPage("http://ko.99bitgongchang.com/00/11.html")
+    cct,ct=0,str(len(month12))
+    TAR="abc"
+    t_db=axdb.axDB(TAR)
+    par_urls=[x[0] for x in t_db.getPages()]
+    t_db.close()
     for ak in month12:
-        print "---->"+ak['title']
+        cct+=1
+        print "["+str(cct)+"/"+ct+"]---->"+ak['title']
+        if ak['url'] in par_urls:
+            print "Exsited,Pass"
+            continue
+        #db=axdb.axDB(os.path.join(os.getcwd(),TAR))
+        et=[]#[x[0] for x in db.getPages()]
         a=fromItemPage(ak['url'])
-        download_ax(a,os.getcwd())
+        if a not in et:
+            download_ax(a,TAR)
     #a=fromItemPage("http://ko.99bitgc.info/p2p/11/13-11-29-22-05-48.html")
     #   download_ax(a,os.getcwd())
     #for xm in mains:

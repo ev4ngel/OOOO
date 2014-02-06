@@ -26,28 +26,32 @@ def fromItemPage(url):
     """
     #urlparse.urljoin(filepath,n)
     request=urllib2.Request(url,headers={"user-agent":"Mozilla/5.0 (Windows NT 5.1; rv:25.0) Gecko/20100101 Firefox/25.0"})
-    html=urllib2.urlopen(request).read()  
-    bx=bs(html,"html.parser",parse_only=ss("div",id="content"))
     rlt=[]
-    nexxt=bx.find(["a","img"])
-    while nexxt: 
-        if nexxt.name=="a":
-            try:
-                nexxt.img.get("src")
-            except:
-                if len(rlt)!=0:
-                    href=nexxt.get("href").strip()
-                    if not rlt[-1].get("tor",None) and re.search(r'[A-Z0-9]{6,10}\.html$',href) :
-                        rlt[-1]["tor"]=href
-                        rlt[-1]["purl"]=url
-        elif nexxt.name=="img":
-            src=nexxt.get("src").strip()
-            if re.search(r'jpg$',src,re.I):                
-                if len(rlt)==0 or  rlt[-1].get("tor",None):
-                    rlt.append({"img":[src]})
-                else:
-                    rlt[-1]["img"].append(src)
-        nexxt=nexxt.find_next(["a","img"])
+    try:
+        html=urllib2.urlopen(request).read()  
+        bx=bs(html,"html.parser",parse_only=ss("div",id="content"))
+        
+        nexxt=bx.find(["a","img"])
+        while nexxt: 
+            if nexxt.name=="a":
+                try:
+                    nexxt.img.get("src")
+                except:
+                    if len(rlt)!=0:
+                        href=nexxt.get("href").strip()
+                        if not rlt[-1].get("tor",None) and re.search(r'[A-Z0-9]{6,10}\.html$',href) :
+                            rlt[-1]["tor"]=href
+                            rlt[-1]["purl"]=url
+            elif nexxt.name=="img":
+                src=nexxt.get("src").strip()
+                if re.search(r'jpg$',src,re.I):                
+                    if len(rlt)==0 or  rlt[-1].get("tor",None):
+                        rlt.append({"img":[src]})
+                    else:
+                        rlt[-1]["img"].append(src)
+            nexxt=nexxt.find_next(["a","img"])
+    except:
+        print "Failed to Get "+url
     return rlt
 
 def _None(url):
@@ -64,25 +68,41 @@ def download_ax(ax,tgt_path,seperate_dir=False,
             seperate_dir true if you want to mkdir for every item(one torrent and more pic)
     return:None for final use
     """
-    db=axdb(tgt_path)
-    for axx in ax:        
-        dk=axx["tor"].split("/")[-1]
-        pid=db.getPageIdByUrl(axx['purl'])
-        if pid==-1:
-            pid=db.addPage(axx['purl'],"",1)
+    if not os.path.exists(tgt_path):
+        os.mkdir(tgt_path)
+    db=axDB(tgt_path)
+    for axx in ax:
+        tid=0
         todir=tgt_path
-        if seperate_dir:
-            todir=os.path.join(tgt_path,dk)
-            os.mkdir(todir)
-        url,rlt=torrent_download(axx['tor'],todir)
-        tid=db.addTorrent(url,url.split("/")[-1],todir,int(rlt),pid)
-        onitem({'path':dk,"url":axx['tor'],"purl":axx['purl'],"img":axx['img']})
-        if not rlt: 
-            ondisabletor({"url":url,"purl":axx['purl']})
-        for img in axx['img']:
-            imgrlt=img_download(img,todir,dk+"_")
-            db.addImg(imgrlt[1],imgrlt[0],todir,int(imgrlt[2]),tid)
-            if not imgrlt[2]:
-                ondisableimg([])
-            else:
-                onsuccessimg([])
+        try:
+            dk=axx["tor"].split("/")[-1]
+            pid=db.getPageIdByUrl(axx['purl'])
+            if pid==-1:
+                pid=db.addPage(axx['purl'],"",1)            
+            if seperate_dir:
+                todir=os.path.join(tgt_path,dk)
+                os.mkdir(todir)
+            print "[Tor]"+axx['tor']+"_ing..."
+            if db.getTorrentIdByName(dk)>0:
+                print "Existing,Cancel..."
+                continue
+            url,rlt=torrent_download(axx['tor'],todir)
+            print "OK:"+str(rlt)
+            tid=db.addTorrent(url,url.split("/")[-1],todir,int(rlt),pid)
+        except KeyError as ke:
+            print "No Torrent Found"
+        #onitem({'path':dk,"url":axx['tor'],"purl":axx['purl'],"img":axx['img']})
+        #if not rlt: 
+        #    ondisabletor({"url":url,"purl":axx['purl']})
+        try:
+            for img in axx['img']:
+                print "[Img]"+img.split("/")[-1]+"_ing..."
+                imgrlt=img_download(img,todir,dk+"_")
+                print "OK:"+str(imgrlt[0])
+                db.addImg(imgrlt[1],imgrlt[0],todir,int(imgrlt[2]),tid)
+                #if not imgrlt[2]:
+                #    ondisableimg([])
+                #else:
+                #    onsuccessimg([])
+        except KeyError as ke:
+            print "No Img Found"

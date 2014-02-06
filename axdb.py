@@ -2,9 +2,9 @@
 import sqlite3
 import os
 class axDB:
-    #imgs:url,name,path,state,torrent_id
-    #torrents:url,name,path,state,page_id
-    #pages:url,title,state(1 over,0 not over)
+    #imgs:url,name,path,stat,torrent_id
+    #torrents:url,name,path,stat,page_id
+    #pages:url,title,stat(1 over,0 not over)
     def __init__(self,path=os.getcwd(),removeifexists=False):
         self._path=path
         self._dbname="abx.db"
@@ -15,14 +15,14 @@ class axDB:
         self._cn=sqlite3.connect(abspath)
         self._cr=self._cn.cursor()
         try:
-            self._cr.execute("CREATE TABLE imgs (url TEXT,name TEXT,path TEXT,state INT,torrent_id INT)")
-            self._cr.execute("CREATE TABLE torrents (url TEXT,name TEXT,path TEXT,state INT,page_id INT)")
-            self._cr.execute("CREATE TABLE pages (url TEXT,title TEXT,state INT)")
+            self._cr.execute("CREATE TABLE imgs (url TEXT,name TEXT,path TEXT,stat INT,torrent_id INT)")
+            self._cr.execute("CREATE TABLE torrents (url TEXT,name TEXT,path TEXT,stat INT,page_id INT)")
+            self._cr.execute("CREATE TABLE pages (url TEXT,title TEXT,stat INT)")
             self._cn.commit()
         except:
             self._new=True
-    def addImg(self,url,name,path,state,torrent_id):
-        self._cr.execute("INSERT INTO imgs  VALUES(?,?,?,?,?)",(url,name,path,state,torrent_id))
+    def addImg(self,url,name,path,stat,torrent_id,commit=True):
+        self._cr.execute("INSERT INTO imgs  VALUES(?,?,?,?,?)",(url,name,path,stat,torrent_id))
         if commit:
             self._cn.commit()
             return self._cr.lastrowid
@@ -45,8 +45,8 @@ class axDB:
         self._cr.executemany("INSERT INTO IMGS (IURL,INAME,TID) VALUES (?,?,?)",[(a,a.split('/')[-1],lastrow) for a in axItem["img"]])
         if not waitforcommit:
             self._cn.commit()
-    def addPage(self,url,title,state,commit=True):
-        self._cr.execute("INSERT INTO pages  VALUES(?,?,?)",(url,title,state))
+    def addPage(self,url,title,stat,commit=True):
+        self._cr.execute("INSERT INTO pages  VALUES(?,?,?)",(url,title,stat))
         if commit:
             self._cn.commit()
             return self._cr.lastrowid
@@ -62,8 +62,8 @@ class axDB:
             return self._cr.fetchone()[0]
         except:
             return -1
-    def addTorrent(self,tor_url,tor_name,tor_dir,tor_state,page_id,commit=True):
-        self._cr.execute("INSERT INTO torrents VALUES (?,?,?,?,?)",(tor_url,tor_name,tor_dir,tor_state,page_id))
+    def addTorrent(self,tor_url,tor_name,tor_dir,tor_stat,page_id,commit=True):
+        self._cr.execute("INSERT INTO torrents VALUES (?,?,?,?,?)",(tor_url,tor_name,tor_dir,tor_stat,page_id))
         if commit:
             self._cn.commit()
             return self._cr.lastrowid
@@ -89,6 +89,10 @@ class axDB:
         for ai in axItems:
             self.addItem(ai,path,True)
         self._cn.commit()
+
+    def getPages(self):
+        self._cr.execute("SELECT * FROM PAGES")
+        return self._cr.fetchall()
     def close(self):
         try:
             self._cn.close()
