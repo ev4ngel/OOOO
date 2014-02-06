@@ -1,19 +1,36 @@
 #-*- encoding:utf8 -*-
 import sqlite3
 import os
+class axDBCfg:
+    name="abx.db"
 class axDB:
     #imgs:url,name,path,stat,torrent_id
     #torrents:url,name,path,stat,page_id
     #pages:url,title,stat(1 over,0 not over)
     def __init__(self,path=os.getcwd(),removeifexists=False):
         self._path=path
-        self._dbname="abx.db"
+        self._dbname=axDBCfg.name
         self._new=False
-        self.init_all()
-    def init_all(self):
+        
+    def isUsed(self):
+        if os.path.exists(os.path.join(self._path,self._dbname)):
+            self.connect()
+            try:
+                self.getPages()
+                return True
+            except:
+                pass
+            finally:
+                self.close()
+                return False
+        else:
+            return False
+    def connect(self):
         abspath=os.path.join(self._path,self._dbname)
         self._cn=sqlite3.connect(abspath)
         self._cr=self._cn.cursor()
+    def init_all(self):
+        self.connect()
         try:
             self._cr.execute("CREATE TABLE imgs (url TEXT,name TEXT,path TEXT,stat INT,torrent_id INT)")
             self._cr.execute("CREATE TABLE torrents (url TEXT,name TEXT,path TEXT,stat INT,page_id INT)")
@@ -52,6 +69,9 @@ class axDB:
             return self._cr.lastrowid
         else:
             return -1
+    def togglePageState(self,pid):
+        self._cr.execute("UPDATE SET STAT=1 WHERE OID=?",(pid,))
+        self._cn.commit()
     def addPages(self,page_s):
         self._cr.excutemany("INSERT INTO pages VALUES (?,?)",page_s)
         self._cn.commit()
@@ -81,6 +101,10 @@ class axDB:
             return self._cr.fetchone()[0]
         except:
             return -1
+    def getTorrentUrlByPageId(self,page_id):
+        self._cr.execute("SELECT URL,NAME FROM TORRENTS WHRER PAGE_ID=%s"%page_id)
+        return self._cr.fentchall()
+
     def addPageItems(self,axItems,path):
         """http://99.99btgongchang.info/00/11.html
         [{'tor':"xxx",'img':[],'purl':xxx},]
@@ -91,7 +115,7 @@ class axDB:
         self._cn.commit()
 
     def getPages(self):
-        self._cr.execute("SELECT * FROM PAGES")
+        self._cr.execute("SELECT OID,URL,STAT FROM PAGES")
         return self._cr.fetchall()
     def close(self):
         try:
