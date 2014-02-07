@@ -1,4 +1,10 @@
 import urllib2,urllib,httplib, re, urlparse,os
+def mknetshortcut(url,fname,path):
+    if not fname.endswith(".url"):
+        fname+=".url"
+    with open(os.path.join(path,fname),'w') as f:
+        f.write("[internetShortCut]\n")
+        f.write("url=%s"%url)
 def get_torrent_string(url):
     """
     input:  url the html url
@@ -29,25 +35,28 @@ def get_torrent_string(url):
     content=rsp.read()
     title=rsp.getheader("content-disposition").split('"')[1]
     return (title, content)
+
 def torrent_download(url,filepath,name=None,debug=False):
     rlt=True
-    try:
-        n, a=get_torrent_string(url)
-        if name:
-            n=name
-        absname=os.path.join(filepath,n)
-        if os.path.exists(absname):
-            return url,rlt
-        if not os.path.exists(filepath):
-            os.makedirs(filepath)
-        with open(absname, 'wb') as f:            
-            f.write(a)
-    except:
-        rlt=False
-        if debug:
-            print "Failed To Get Torrent"+url
-    finally:
-        return url,rlt
+    if url.find("suwpan")>0:
+        mknetshortcut(url,url.split("/")[-1],filepath)
+    else:
+        try:
+            n, a=get_torrent_string(url)
+            if name:
+                n=name
+            absname=os.path.join(filepath,n)
+            if os.path.exists(absname):
+                return url,rlt
+            if not os.path.exists(filepath):
+                os.makedirs(filepath)
+            with open(absname, 'wb') as f:            
+                f.write(a)
+        except:
+            rlt=False
+            if debug:
+                print "Failed To Get Torrent"+url
+    return url,rlt
 def img_download(url,to_path,affix=""):
     fname=os.path.join(to_path,affix+url.split("/")[-1])
     state=False
