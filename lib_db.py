@@ -47,12 +47,17 @@ class axDB:
             return -1
 
     def addPage(self,url,title,stat,commit=True):
-        self._cr.execute("INSERT INTO pages  VALUES(?,?,?)",(url,title,stat))
-        if commit:
-            self._cn.commit()
-            return self._cr.lastrowid
+        self._cr.execute("SELECT OID FROM PAGES WHERE URL=?",(url,))
+        rlt=self._cr.fetchone()
+        if rlt:
+            return rlt[0]
         else:
-            return -1
+            self._cr.execute("INSERT INTO pages  VALUES(?,?,?)",(url,title,stat))
+            if commit:
+                self._cn.commit()
+                return self._cr.lastrowid
+            else:
+                return -1
     def togglePageState(self,pid):
         self._cr.execute("UPDATE SET STAT=1 WHERE OID=?",(pid,))
         self._cn.commit()
