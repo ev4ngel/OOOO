@@ -59,7 +59,7 @@ class axDB:
             else:
                 return -1
     def togglePageState(self,pid):
-        self._cr.execute("UPDATE SET STAT=1 WHERE OID=?",(pid,))
+        self._cr.execute("UPDATE  PAGES SET STAT=1 WHERE OID=?",(pid,))
         self._cn.commit()
 
     def getPageIdByUrl(self,url):
@@ -82,11 +82,14 @@ class axDB:
             return self._cr.fetchone()[0]
         except:
             return -1
-    def getTorrentUrlByPageId(self,page_id):
-        self._cr.execute("SELECT URL,NAME FROM TORRENTS WHERE PAGE_ID=?",(page_id,))
+    def getTorrentUrlByPageId(self,page_id,selectall=-1):
+        append=""
+        par=(page_id,)
+        if selectall!=-1:
+            append="and STAT=?"
+            par=(page_id,selectall)
+        self._cr.execute("SELECT URL,NAME FROM TORRENTS WHERE PAGE_ID=?"+append,par)
         return self._cr.fetchall()
-
-
 
     def getPages(self):
         self._cr.execute("SELECT OID,URL,STAT FROM PAGES")
