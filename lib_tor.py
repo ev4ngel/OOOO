@@ -1,4 +1,5 @@
 import urllib2,urllib,httplib, re, urlparse,os
+from lib_common import *
 def mknetshortcut(url,fname,path):
     if not fname.endswith(".url"):
         fname+=".url"
@@ -11,42 +12,63 @@ def get_torrent_string(url):
     return: title the file name
             string the content in torrent
     """
-    request=urllib2.Request(url,headers={"user-agent":"Mozilla/5.0 (Windows NT 5.1; rv:25.0) Gecko/20100101 Firefox/25.0"})
-    ss=urllib2.urlopen(request,timeout=5).read()  
-    param={}
+    cxt=""
+    title=""
     getPostPath=re.compile(r'<form.*action="(?P<action>.*?)"')
     getElse=re.compile(r'value="(?P<value>.*?)"\s*id="(?P<id>.*?)"\s*name="(?P<name>.*?)"')
-    action=getPostPath.search(ss)
+    try:
+        request=urllib2.Request(url,headers=Common.HEADER)
+        cxt=urllib2.urlopen(request,timeout=5).read()
+        del request
+    except:
+        if Common.DEBUG:
+            print "Error:Get Tor Page %s"%url
+        return (None,None)
+
+    action=getPostPath.search(cxt)
     if not action:
-        return None
-    actpath=urlparse.urlparse(urlparse.urljoin(url, action.group("action"))).path
-    for s in re.findall(r'<input\stype="hidden".*?>', ss, re.S):
+        if Common.DEBUG:
+            print "Error:No Action Found in %s"%url
+        return (None,None)
+    _actpath=urlparse.urlparse(urlparse.urljoin(url, action.group("action"))).path
+    
+    param={}
+    for s in re.findall(r'<input\stype="hidden".*?>', cxt, re.S):
         g=getElse.search(s)
         param[g.group("name")]= g.group("value")
-    cparam=urllib.urlencode(param)
-    header={}
-    header['user-agent']="Mozilla/4.0"
-    header['content-type']="application/x-www-form-urlencoded"
-    header['host']=urlparse.urlparse(url).netloc
-    header['connection']='keep-alive'
-    hhc=httplib.HTTPConnection(header['host'], 80)
-    hhc.request("POST", actpath, cparam, header)
-    rsp=hhc.getresponse()
-    content=rsp.read()
-    title=rsp.getheader("content-disposition").split('"')[1]
-    return (title, content)
+    _cparam=urllib.urlencode(param)
+    del param
+    
+    _header={}
+    _header['user-agent']=Common.HEADER["user-agent"]
+    _header['content-type']="application/x-www-form-urlencoded"
+    _header['host']=urlparse.urlparse(url).netloc
+    _header['connection']='keep-alive'
+    try:
+        hhc=httplib.HTTPConnection(header['host'], 80)
+        hhc.request("POST", _actpath, _cparam, _header)
+        rsp=hhc.getresponse().read()
+        cxt=rsp.read()
+        title=rsp.getheader("content-disposition").split('"')[1]
+        del rsp
+        del hhc
+    except:
+        if Common.DEBUG:
+            print "Error:Getting Tor Content %s"%_actpath
+        title=cxt=None
+    return (title, cxt)
 
-def torrent_download(url,filepath,name=None,debug=False):
+def torrent_download(url,filepath):
     rlt=True
     if url.find("suwpan")>0:
         mknetshortcut(url,url.split("/")[-1],filepath)
     else:
         try:
             n, a=get_torrent_string(url)
-            if name:
-                n=name
             absname=os.path.join(filepath,n)
             if os.path.exists(absname):
+                if Common.DEBUG:
+                    print "Warn:Exist TOR %s"%absname
                 return url,rlt
             if not os.path.exists(filepath):
                 os.makedirs(filepath)
@@ -54,25 +76,28 @@ def torrent_download(url,filepath,name=None,debug=False):
                 f.write(a)
         except:
             rlt=False
-            if debug:
-                print "Failed To Get Torrent"+url
+            if Common.DEBUG:
+                print "Error:Getting Tor "+url
     return url,rlt
-def img_download(url,to_path,affix=""):
-    fname=os.path.join(to_path,affix+url.split("/")[-1])
+def img_download(url,to_path,prefix=""):
+    fname=os.path.join(to_path,prefix+url.split("/")[-1])
     state=False
     if  os.path.exists(fname):
-       state=True
+        if Common.DEBUG:
+            print "Warn:Exist IMG %s"%fname
+        state=True
     else:
         if not os.path.exists(to_path):
             os.makedirs(to_path)
         try:
-            text=urllib2.urlopen(urllib2.Request(url,headers={"user-agent":"Mozilla/5.0 (Windows NT 5.1; rv:25.0) Gecko/20100101 Firefox/25.0"}),timeout=10).read()
+            text=urllib2.urlopen(urllib2.Request(url,headers=Common.HEADER),timeout=10).read()
             with open(fname,'wb') as f:
                 f.write(text)
             state=True
         except:
-            pass
+            if Common.DEBUG:
+                print "Error:Reading IMG %s"%url
     return (fname,url,state)
 if __name__=="__main__":
-    print img_download("http://img789.com/images/2013/09/13/092G6bQ.jpg","d:\\oxx","a_")
+    pass
     
