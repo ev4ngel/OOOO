@@ -1,10 +1,13 @@
+# -*- coding: utf8 -*-
 import sys,os,re,json
 from lib_page import *
 from lib_db import *
 def usage():
     print "99BT Downloader"
     print "%s url target_dir"%sys.argv[0]
-
+def retry(path):
+    """重新下载"""
+    pass
 def urlparser(url):
     if url.startswith("http"):
         _url=url[7:]
@@ -30,12 +33,9 @@ if __name__=="__main__":
     """
     if len(sys.argv)==1:
         usage()
-    elif len(sys.argv)==3:
+    elif len(sys.argv)>=3:
         db_instance=axDB(sys.argv[2])
         sd=False
         if "-s" in sys.argv:
             sd=True
         download_ax(x(),sys.argv[2],db_instance,seperate_dir=sd)
-        #open("e://xx.txt",'w').write(json.dumps(x()))
-        #download_ax(x(),sys.argv[2])
-        
