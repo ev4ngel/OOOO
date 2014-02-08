@@ -40,7 +40,6 @@ def fromItemPage(url):
                         href=nexxt.get("href").strip()
                         if not rlt[-1].get("tor",None) and re.search(r'([A-Z0-9]{6,10}\.html$)|([a-z0-9]{16}\.html$)',href) :
                             rlt[-1]["tor"]=href
-                            #rlt[-1]["purl"]=url
             elif nexxt.name=="img":
                 src=nexxt.get("src").strip()
                 if re.search(r'jpg$',src,re.I):                
@@ -73,15 +72,16 @@ def download_ax(ax,tgt_path,db_instance,seperate_dir=False,
         os.makedirs(tgt_path)
     if db_instance.isUsed():
         db_instance.connect()
+        axpg=ax.keys()
         for dpg in db_instance.getPages():
-            if int(dpg[2])==1:
-                del ax[dpg[1]]
-            else:
-                urls=[x[0] for x in db_instance.getTorrentUrlByPageId(dpg[0])]
-                print len(urls)
-                for item in ax[dpg[1]]:
-                    if item.get("tor",None) or item['tor'] in urls:
-                        del item
+            if dpg[1] in axpg:
+                if int(dpg[2])==1:
+                    del ax[dpg[1]]
+                else:
+                    urls=[x[0] for x in db_instance.getTorrentUrlByPageId(dpg[0],1)]
+                    for item in ax[dpg[1]][::-1]:
+                        if not item.get("tor",None) or item['tor'] in urls:
+                            ax[dpg[1]].remove(item)
     
     db_instance.connect()
     db_instance.init_all()
@@ -114,30 +114,4 @@ def download_ax(ax,tgt_path,db_instance,seperate_dir=False,
             ct_tor+=1
         db_instance.togglePageState(pid)
         ct_pg+=1
-            
-##        todir=tgt_path
-##        try:
-##            dk=axx["tor"].split("/")[-1]
-##            pid=db.getPageIdByUrl(axx['purl'])
-##            if pid==-1:
-##                pid=db.addPage(axx['purl'],"",1)            
-##            if seperate_dir:
-##                todir=os.path.join(tgt_path,dk)
-##                os.mkdir(todir)
-##            print "[Tor]"+axx['tor']+"_ing..."
-##            if db.getTorrentIdByName(dk)>0:
-##                print "Existing,Cancel..."
-##                continue
-##            url,rlt=torrent_download(axx['tor'],todir)
-##            print "OK:"+str(rlt)
-##            tid=db.addTorrent(url,url.split("/")[-1],todir,int(rlt),pid)
-##        except KeyError as ke:
-##            print "No Torrent Found"
-##        try:
-##            for img in axx['img']:
-##                print "[Img]"+img.split("/")[-1]+"_ing..."
-##                imgrlt=img_download(img,todir,dk+"_")
-##                print "OK:"+str(imgrlt[0])
-##                db.addImg(imgrlt[1],imgrlt[0],todir,int(imgrlt[2]),tid)
-##        except KeyError as ke:
-##            print "No Img Found"
+
