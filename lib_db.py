@@ -30,11 +30,14 @@ class axDB:
             self._cr=self._cn.cursor()
     def init_all(self):
         self.connect()
-        self._cr.execute("CREATE TABLE imgs (url TEXT,name TEXT,path TEXT,stat INT,torrent_id INT)")
-        self._cr.execute("CREATE TABLE torrents (url TEXT,name TEXT,path TEXT,stat INT,page_id INT)")
-        self._cr.execute("CREATE TABLE pages (url TEXT,title TEXT,stat INT)")
-        self._cn.commit()
-
+        try:
+            self._cr.execute("CREATE TABLE imgs (url TEXT,name TEXT,path TEXT,stat INT,torrent_id INT)")
+            self._cr.execute("CREATE TABLE torrents (url TEXT,name TEXT,path TEXT,stat INT,page_id INT)")
+            self._cr.execute("CREATE TABLE pages (url TEXT,title TEXT,stat INT)")
+            self._cn.commit()
+        except:
+            if Common.DEBUG:
+                print "Warn:All Table Exists"
     def addImg(self,url,name,path,stat,torrent_id,commit=True):
         self._cr.execute("INSERT INTO imgs  VALUES(?,?,?,?,?)",(url,name,path,stat,torrent_id))
         if commit:

@@ -13,7 +13,7 @@ def fromMonthPage(url):
     request=urllib2.Request(url,headers=Common.HEADER)
     try:
         html=urllib2.urlopen(request).read()    
-    except httplib.HTTPException:
+    except :
         if Common.DEBUG:
             print "Error:Reading MonthPage From %s"%url
         return rlt
@@ -34,7 +34,7 @@ def fromItemPage(url):
     rlt=[]
     try:
         html=urllib2.urlopen(request).read()  
-    except httplib.HTTPError:
+    except:
         if Common.DEBUG:
             print "Error:Reading %s"%url
             return {url:rlt}
@@ -94,24 +94,31 @@ def download_ax(ax,tgt_path,db_instance,seperate_dir=False):
         print "Downloading {0}:[{1}/{2},{3} TORs]".format(axk.split('/')[-1],ct_pg,sum_pg,sum_itm)
         ct_tor=1
         for item in axv:
-            tor_rlt=0
-            dk=item["tor"].split("/")[-1]
+            tor_name=tor_rlt=tor_url=0
+            try:
+                tor_url=item["tor"]
+                tor_name=item["tor"].split("/")[-1]
+            except:
+                tor_name=Common.NO_TOR_NAME
+                tor_url=Common.NO_TOR_URL
+                if Common.DEBUG:
+                    print "Warn:No TOR Found!"
             if seperate_dir:
-                todir=os.path.join(tgt_path,dk)
+                todir=os.path.join(tgt_path,tor_name)
                 os.mkdir(todir)
-            print "[{0}/{1}]{2},{3} Pics".format(ct_tor,sum_itm,item['tor'],len(item['img']))
-            url,rlt=torrent_download(item['tor'],todir)
+            print "[{0}/{1}]{2},{3} Pics".format(ct_tor,sum_itm,tor_url,len(item.get('img',[])))
+            url,rlt=torrent_download(tor_url,todir)
             if rlt:
                 tor_rlt=1
             tid=db_instance.addTorrent(url,url.split("/")[-1],todir,int(tor_rlt),pid)
             
             try:
                 for img in item['img']:
-                    imgrlt=img_download(img,todir,dk+"_")
+                    imgrlt=img_download(img,todir,tor_name+"_")
                     db_instance.addImg(imgrlt[1],imgrlt[0],todir,int(imgrlt[2]),tid)
             except KeyError as ke:
                 if Common.DEBGU:
-                    print "No Img Found"
+                    print "Warn:No IMG Found!"
             ct_tor+=1
         db_instance.togglePageState(pid)
         ct_pg+=1
