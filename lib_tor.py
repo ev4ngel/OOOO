@@ -19,7 +19,6 @@ def get_torrent_string(url):
     try:
         request=urllib2.Request(url,headers=Common.HEADER)
         cxt=urllib2.urlopen(request,timeout=5).read()
-        print len(cxt)
         #del request
     except:
         if Common.DEBUG:
@@ -32,7 +31,6 @@ def get_torrent_string(url):
             print "Error:No Action Found in %s"%url
         return (None,None)
     _actpath=urlparse.urlparse(urlparse.urljoin(url, action.group("action"))).path
-    print _actpath
     param={}
     for s in re.findall(r'<input\stype="hidden".*?>', cxt, re.S):
         g=getElse.search(s)
@@ -45,20 +43,18 @@ def get_torrent_string(url):
     _header['content-type']="application/x-www-form-urlencoded"
     _header['host']=urlparse.urlparse(url).netloc
     _header['connection']='keep-alive'
-#try:
-    hhc=httplib.HTTPConnection(header['host'], 80)
-    hhc.request("POST", _actpath, _cparam, _header)
-    rsp=hhc.getresponse()
-    cxt=rsp.read()
-    print '*'*10
-    print len(cxt)
-    title=rsp.getheader("content-disposition").split('"')[1]
-    #del rsp
-    #del hhc
-#except:
-    if Common.DEBUG:
-        print "Error:Getting Tor Content %s"%_actpath
-    #title=cxt=None
+    try:
+        hhc=httplib.HTTPConnection(_header['host'], 80)
+        hhc.request("POST", _actpath, _cparam, _header)
+        rsp=hhc.getresponse()
+        cxt=rsp.read()
+        title=rsp.getheader("content-disposition").split('"')[1]
+        #del rsp
+        #del hhc
+    except:
+        if Common.DEBUG:
+            print "Error:Getting Tor Content %s"%_actpath
+        title=cxt=None
     return (title, cxt)
 
 def torrent_download(url,filepath):

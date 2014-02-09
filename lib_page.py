@@ -22,7 +22,7 @@ def fromMonthPage(url):
     for a in aas:
         href=a.get("href")
         if re.search(r'(\d\d-){5}\d\d\.html',href):
-            rlt.append({"title":a.text,"url":urlparse.urljoin(url,href)}) 
+            rlt.append({"title":a.text,"url":urlparse.urljoin(url,href)})
     return rlt
 
 def fromItemPage(url):
