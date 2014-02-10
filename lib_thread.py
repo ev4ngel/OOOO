@@ -32,7 +32,7 @@ class Thread_Pic(threading.Thread):
     def run(self):
         while True:
             pic=self._pics.get()
-            if not pic:#线程该退出
+            if not pic:
                 return None
             else:
                 imgrlt=img_download(pic[1],self._dir,self._prefix+"_")

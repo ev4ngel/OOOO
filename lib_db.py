@@ -1,12 +1,9 @@
-#-*- encoding:utf8 -*-
+#-*- coding:utf8 -*-
 import sqlite3
 import os
 from lib_common import *
 
 class axDB:
-    #imgs:url,name,path,stat,torrent_id
-    #torrents:url,name,path,stat,page_id
-    #pages:url,title,stat(1 over,0 not over)
     def __init__(self,path=os.getcwd(),removeifexists=False):
         self._path=path
         self._dbname=Common.DBNAME
@@ -100,4 +97,4 @@ class axDB:
             self._cn=None
             self._cr=None
         except:
-            pass#closed already
+            pass

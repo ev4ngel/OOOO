@@ -7,9 +7,6 @@ from lib_common import *
 from lib_thread import *
 #[{"img":[],"tor":xxxxx},]
 def fromMonthPage(url):
-    """
-    return:[{"title":item_title."url":url_of_next_page},more...]
-    """
     rlt=[]
     request=urllib2.Request(url,headers=Common.HEADER)
     try:
@@ -27,10 +24,6 @@ def fromMonthPage(url):
     return rlt
 
 def fromItemPage(url):
-    """
-    return:[{"tor":url_of_torrent_page,"img":[url_of_one_img,url_of_other_img],'purl':parent_url},{more...}]
-    """
-    #urlparse.urljoin(filepath,n)
     request=urllib2.Request(url,headers=Common.HEADER)
     rlt=[]
     try:
@@ -44,12 +37,11 @@ def fromItemPage(url):
     while nexxt: 
         if nexxt.name=="a":
             try:
-                nexxt.img.get("src")#Failed When The Link Is A Pic instead of a link to torrent download page
-            except:#To Get A TorPage's Link
+                nexxt.img.get("src")
+            except:
                 if len(rlt)!=0:
                     href=nexxt.get("href").strip()
                     if not rlt[-1].get("tor",None) and re.search(r'([A-Z0-9]{6,10}\.html$)|([a-z0-9]{16}\.html$)',href) :
-                        #getFirst Tor and the link of the page is like XJKJDL.htm or eab34dfa8ab.html
                         rlt[-1]["tor"]=href
         elif nexxt.name=="img":
             src=nexxt.get("src").strip()
@@ -62,13 +54,6 @@ def fromItemPage(url):
     return {url:rlt}
 
 def download_ax(ax,tgt_path,db_instance,seperate_dir=False):
-    """
-    input:{"page_url":[{tor:xxx,img:[xxx,xxx]},{tor:xxx,img:[xxx,xxx]},{url:xxx,tor:xxx,img:[xxx,xxx]}],"page_url":[]}
-        ax return by fromItemPage
-            tgt_path the dir to put
-            seperate_dir true if you want to mkdir for every item(one torrent and more pic)
-    return:None for final use
-    """    
     if not os.path.exists(tgt_path):
         os.makedirs(tgt_path)
     if db_instance.isUsed():
@@ -86,7 +71,7 @@ def download_ax(ax,tgt_path,db_instance,seperate_dir=False):
     
     db_instance.connect()
     db_instance.init_all()
-    for axk,axv in ax.items():#这里就可以放心大胆的存放所有剩余链接地址了
+    for axk,axv in ax.items():
         Common.LOCK_DB.acquire()
         pid=db_instance.addPage(axk,"",0)
         Common.LOCK_DB.release()

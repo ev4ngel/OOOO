@@ -7,11 +7,6 @@ def mknetshortcut(url,fname,path):
         f.write("[internetShortCut]\n")
         f.write("url=%s"%url)
 def get_torrent_string(url):
-    """
-    input:  url the html url
-    return: title the file name
-            string the content in torrent
-    """
     cxt=""
     title=""
     getPostPath=re.compile(r'<form.*action="(?P<action>.*?)"')
@@ -19,7 +14,6 @@ def get_torrent_string(url):
     try:
         request=urllib2.Request(url,headers=Common.HEADER)
         cxt=urllib2.urlopen(request,timeout=5).read()
-        #del request
     except:
         if Common.DEBUG:
             print "Error:Get Tor Page %s"%url
@@ -49,8 +43,6 @@ def get_torrent_string(url):
         rsp=hhc.getresponse()
         cxt=rsp.read()
         title=rsp.getheader("content-disposition").split('"')[1]
-        #del rsp
-        #del hhc
     except:
         if Common.DEBUG:
             print "Error:Getting Tor Content %s"%_actpath
