@@ -2,7 +2,7 @@
 from bs4 import BeautifulSoup as bs,SoupStrainer as ss
 import urllib2,urllib,re,os,urlparse,httplib
 from lib_db import *
-from lib_tor import *
+from lib_download import *
 from lib_common import *
 #[{"img":[],"tor":xxxxx},]
 def fromMonthPage(url):
