@@ -89,6 +89,7 @@ def img_download(url,to_path,prefix=""):
         if not os.path.exists(to_path):
             os.makedirs(to_path)
         try:
+            print "DLD:"+fname
             text=urllib2.urlopen(urllib2.Request(url,headers=Common.HEADER),timeout=10).read()
             with open(fname,'wb') as f:
                 f.write(text)
