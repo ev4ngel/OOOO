@@ -26,7 +26,7 @@ class axDB:
     def connect(self):
         abspath=os.path.join(self._path,self._dbname)
         if not self._cn and not self._cr:
-            self._cn=sqlite3.connect(abspath)
+            self._cn=sqlite3.connect(abspath,check_same_thread=False)
             self._cr=self._cn.cursor()
     def init_all(self):
         self.connect()

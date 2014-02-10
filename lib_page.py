@@ -4,6 +4,7 @@ import urllib2,urllib,re,os,urlparse,httplib
 from lib_db import *
 from lib_download import *
 from lib_common import *
+from lib_thread import *
 #[{"img":[],"tor":xxxxx},]
 def fromMonthPage(url):
     """
@@ -85,41 +86,12 @@ def download_ax(ax,tgt_path,db_instance,seperate_dir=False):
     
     db_instance.connect()
     db_instance.init_all()
-    sum_pg=len(ax)
-    ct_pg=1
-    for axk,axv in ax.items():#这里就可以放心大胆的存放所有剩余链接地址了        
+    for axk,axv in ax.items():#这里就可以放心大胆的存放所有剩余链接地址了
+        Common.LOCK_DB.acquire()
         pid=db_instance.addPage(axk,"",0)
-        todir=tgt_path
-        sum_itm=len(axv)
-        print "Downloading {0}:[{1}/{2},{3} TORs]".format(axk.split('/')[-1],ct_pg,sum_pg,sum_itm)
-        ct_tor=1
-        for item in axv:
-            tor_name=tor_rlt=tor_url=0
-            try:
-                tor_url=item["tor"]
-                tor_name=item["tor"].split("/")[-1]
-            except:
-                tor_name=Common.NO_TOR_NAME
-                tor_url=Common.NO_TOR_URL
-                if Common.DEBUG:
-                    print "Warn:No TOR Found!"
-            if seperate_dir:
-                todir=os.path.join(tgt_path,tor_name)
-                os.mkdir(todir)
-            print "[{0}/{1}]{2},{3} Pics".format(ct_tor,sum_itm,tor_url,len(item.get('img',[])))
-            url,rlt=torrent_download(tor_url,todir)
-            if rlt:
-                tor_rlt=1
-            tid=db_instance.addTorrent(url,url.split("/")[-1],todir,int(tor_rlt),pid)
-            
-            try:
-                for img in item['img']:
-                    imgrlt=img_download(img,todir,tor_name+"_")
-                    db_instance.addImg(imgrlt[1],imgrlt[0],todir,int(imgrlt[2]),tid)
-            except KeyError as ke:
-                if Common.DEBGU:
-                    print "Warn:No IMG Found!"
-            ct_tor+=1
-        db_instance.togglePageState(pid)
-        ct_pg+=1
-    db_instance.close()
+        Common.LOCK_DB.release()
+        item_lock=thread.allocate_lock()
+        col_item=Collect_Item(axv,item_lock)
+        thread_item=[Thread_Item(col_item,tgt_path,db_instance,axk,pid,seperate_dir) for i in range(Common.ITEM_THREAD_NUM)]
+        for ti in thread_item:
+            ti.start()                 
